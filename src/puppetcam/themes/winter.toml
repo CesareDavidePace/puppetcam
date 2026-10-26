@@ -1,0 +1,13 @@
+name = "Winter"
+
+[colors]
+background_top = "#141B2D"
+background_bottom = "#24324F"
+halo = "#3B4D74"
+skin = "#E9B98F"
+sweater = "#2E8B85"
+hat = "#D64545"
+blush = "#F07D7D"
+
+[accessories]
+items = ["beanie"]

@@ -1,0 +1,15 @@
+name = "Office"
+
+[colors]
+background_top = "#2E3138"
+background_bottom = "#4A4F5A"
+halo = "#6A7080"
+skin = "#EDC3A0"
+sweater = "#2F4A7A"
+brow = "#4A3428"
+
+[shape]
+head_roundness = 2.9
+
+[accessories]
+items = ["headphones"]

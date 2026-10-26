@@ -1,0 +1,43 @@
+# Sprout: the default theme, and a full template of every option.
+# Copy it with:  puppetcam themes --export sprout my-theme.toml
+# then delete whatever you don't change: missing keys fall back to these defaults.
+
+name = "Sprout"
+avatar = "sprout"          # which avatar draws this theme
+
+[colors]                   # "#RRGGBB", "#RGB" or [r, g, b]
+background_top = "#24344A"
+background_bottom = "#3A5C78"
+halo = "#547A96"           # soft light behind the head
+skin = "#F5CDAA"
+skin_shade = "#DEAA8A"     # optional, derived from skin if omitted
+neck = "#D4A082"           # optional
+ear_inner = "#ECA096"
+sweater = "#D7963C"
+sweater_shade = "#B67A30"  # optional, derived from sweater if omitted
+eye = "#282837"
+eye_shine = "#FAFAFA"
+brow = "#6E463C"
+mouth = "#5F283C"
+tongue = "#EB6E82"
+blush = "#FA9696"
+stem = "#509646"
+leaf_light = "#6EC85A"
+leaf_dark = "#55A546"
+glasses = "#2A2A33"
+hat = "#C8463C"            # hat_band is derived unless given
+headphones = "#34343E"     # headphones_pad is derived unless given
+
+[shape]                    # proportions; values are clamped to safe ranges
+head_roundness = 2.6       # 2 = ellipse ... 6 = almost square
+head_aspect = 0.93         # head height / width
+eye_size = 1.0
+eye_spacing = 1.0
+mouth_width = 1.0
+body_width = 1.0
+
+[accessories]
+items = ["sprout"]         # any of: sprout, glasses, beanie, headphones
+
+[background]
+image = ""                 # optional picture, path relative to this file

@@ -1,0 +1,21 @@
+name = "Alien"
+
+[colors]
+background_top = "#2A1E3F"
+background_bottom = "#4B3470"
+halo = "#6B4E9A"
+skin = "#A6DB8E"
+ear_inner = "#86C46E"
+blush = "#F4A6B8"
+sweater = "#F2C14E"
+brow = "#4F7A44"
+
+[shape]
+head_roundness = 2.1
+head_aspect = 1.05
+eye_size = 1.4
+eye_spacing = 0.9
+mouth_width = 0.8
+
+[accessories]
+items = []

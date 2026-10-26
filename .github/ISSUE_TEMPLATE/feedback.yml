@@ -1,0 +1,16 @@
+name: Feedback
+description: It works! Tell us how it feels, what's missing, what you'd change
+labels: [feedback]
+body:
+  - type: textarea
+    id: feedback
+    attributes:
+      label: Your feedback
+      description: Does the motion feel natural? Which expressions are missing? What would make you use it every day?
+    validations:
+      required: true
+  - type: input
+    id: setup
+    attributes:
+      label: Your setup
+      placeholder: e.g. macOS 26 on M2, Google Meet in Chrome

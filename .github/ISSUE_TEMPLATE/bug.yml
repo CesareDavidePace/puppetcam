@@ -1,0 +1,23 @@
+name: Something doesn't work
+description: Setup problems, crashes, the avatar moving the wrong way
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, what you saw instead.
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of `puppetcam doctor`
+      render: text
+    validations:
+      required: true
+  - type: dropdown
+    id: app
+    attributes:
+      label: Meeting app (if relevant)
+      options: [Not relevant, Google Meet, Microsoft Teams, Zoom, Other]

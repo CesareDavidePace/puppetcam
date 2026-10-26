@@ -1,0 +1,16 @@
+name = "Mint"
+
+[colors]
+background_top = "#6FBFAC"
+background_bottom = "#B4E3D4"
+halo = "#E3F6EF"
+skin = "#F3D2B6"
+sweater = "#E07A5F"
+glasses = "#3D3A4B"
+
+[shape]
+head_roundness = 3.2
+eye_size = 0.9
+
+[accessories]
+items = ["sprout", "glasses"]
