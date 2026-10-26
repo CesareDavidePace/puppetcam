@@ -81,6 +81,9 @@ Preview window keys: `q` quit · `c` recalibrate · `a` toggle away mode · `b` 
   is in front.
 
 **Linux**
+- **Not yet tested with a real webcam on Linux** (CI covers install, tests and rendering on Ubuntu).
+  If you're on Linux, a report in [#1](https://github.com/cesaredavidepace/puppetcam/issues/1)
+  would help a lot.
 - **Start puppetcam before opening the meeting in the browser.** With `exclusive_caps=1`, Chrome
   only lists the virtual camera once frames are flowing into it.
 - `--gpu` works only with MediaPipe wheels built with GPU support; otherwise it falls back to CPU.
