@@ -29,7 +29,7 @@ mouth. Zoom, Meet, Teams and anything else just see a normal webcam.
 | macOS | OBS Studio 30+. Start and stop its Virtual Camera once, allow it (see below), then quit OBS. |
 | Linux | `sudo apt install v4l2loopback-dkms` then `sudo modprobe v4l2loopback devices=1 exclusive_caps=1 card_label="puppetcam"` |
 
-**2. Install and run** (Python 3.11+):
+**2. Install and run** (Python 3.11+; on Windows use 3.11 or 3.12, see [platform notes](#platform-notes)):
 
 ```bash
 pip install puppetcam
@@ -60,15 +60,14 @@ Preview window keys: `q` quit · `c` recalibrate · `a` toggle away mode · `b` 
 ### Platform notes
 
 **Windows**
-- If you get `WinError 4551` ("An Application Control policy has blocked this file"),
-  Windows 11's **Smart App Control** is blocking MediaPipe's library, which isn't code-signed.
-  On a personal PC you can turn it off in Windows Security → App & browser control → Smart App
-  Control settings (check first: on some Windows versions it can't be turned back on without
-  resetting Windows). On a work PC, ask your IT department. `puppetcam doctor` detects this.
+- **Use Python 3.11 or 3.12.** Windows 11's Smart App Control blocks the MediaPipe library
+  that comes with Python 3.13+ (`WinError 4551`, "An Application Control policy has blocked
+  this file"), because it isn't code-signed. On 3.11/3.12 puppetcam installs an older MediaPipe
+  that Windows allows. With several Pythons installed: `py -3.12 -m pip install puppetcam`,
+  then `py -3.12 -m puppetcam`. `puppetcam doctor` detects the block.
 - The camera is opened with DirectShow + MJPG: it starts in well under a second, where
   Media Foundation can take several.
-- Use Python 3.11 or newer: older versions sleep in ~15 ms steps on Windows, which makes the
-  frame rate uneven.
+- Older Pythons than 3.11 sleep in ~15 ms steps on Windows, which makes the frame rate uneven.
 - While you're away, the tracking thread switches to Windows 11 "efficiency mode" (EcoQoS).
 
 **macOS**

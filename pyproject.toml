@@ -22,7 +22,11 @@ classifiers = [
 # mediapipe already brings opencv-contrib-python and sounddevice:
 # don't add another OpenCV wheel, two cv2 packages conflict.
 dependencies = [
-    "mediapipe>=0.10.14",
+    "mediapipe>=0.10.14; sys_platform != 'win32'",
+    # Windows 11 Smart App Control blocks the unsigned DLL that MediaPipe >= 0.10.30 loads
+    # (WinError 4551); 0.10.21 loads fine. It has no wheels for Python 3.13+.
+    "mediapipe>=0.10.14,<0.10.30; sys_platform == 'win32' and python_version < '3.13'",
+    "mediapipe>=0.10.30; sys_platform == 'win32' and python_version >= '3.13'",
     "numpy>=1.24",
     "certifi",  # model download on python.org macOS builds, which lack system CAs
     "pyvirtualcam>=0.11",

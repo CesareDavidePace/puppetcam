@@ -8,6 +8,8 @@
 - Windows 11: when Smart App Control blocks MediaPipe (`WinError 4551`), puppetcam explains how
   to fix it instead of crashing with a traceback.
 - `puppetcam doctor` now actually loads the face tracker, so it catches that block too.
+- Windows with Python 3.11/3.12: installs MediaPipe 0.10.21, which Smart App Control allows
+  (tested on Windows 11 with Smart App Control on). Newer MediaPipe is still used elsewhere.
 
 ## 0.1.0
 

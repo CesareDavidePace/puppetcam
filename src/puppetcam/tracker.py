@@ -33,11 +33,15 @@ MODEL_URL = (
 _WIN_APP_CONTROL = 4551
 APP_CONTROL_HELP = """\
 Windows blocked MediaPipe's face tracking library (Smart App Control).
-puppetcam needs it, and it can't be signed by us: it ships with Google's mediapipe package.
-  Personal PC: Windows Security > App & browser control > Smart App Control settings > Off.
+It ships with Google's mediapipe package and isn't code-signed. Recent versions are blocked,
+older ones load fine but need Python 3.11 or 3.12:
+  Easiest:     install Python 3.12 from python.org, then
+                 py -3.12 -m pip install puppetcam
+                 py -3.12 -m puppetcam
+  Otherwise:   Windows Security > App & browser control > Smart App Control settings > Off.
                Check before turning it off: on some Windows versions it can't be turned
                back on without resetting Windows.
-  Work PC:     the policy comes from your IT department; ask them to allow mediapipe."""
+  Work PC:     the policy may come from your IT department; ask them to allow mediapipe."""
 
 
 @dataclass
