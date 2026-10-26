@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.1
 
 - Eyes no longer shrink when you turn your head: MediaPipe reads the far eye as half closed
   (blink score up to ~0.25) while it's open, so small blink scores are now ignored.
