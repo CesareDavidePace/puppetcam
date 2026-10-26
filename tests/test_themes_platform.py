@@ -136,3 +136,20 @@ def test_sensor_tracks_slowly_when_away(monkeypatch):
     active, away = calls_in(False), calls_in(True)
     assert active > 10
     assert away <= 4
+
+
+def test_windows_app_control_block_gets_a_readable_error(monkeypatch, tmp_path):
+    from mediapipe.tasks.python import vision
+
+    from puppetcam.tracker import FaceTracker
+
+    def blocked(options):
+        exc = OSError("An Application Control policy has blocked this file")
+        exc.winerror = 4551
+        raise exc
+
+    monkeypatch.setattr(vision.FaceLandmarker, "create_from_options", blocked)
+    model = tmp_path / "face_landmarker.task"
+    model.write_bytes(b"x")
+    with pytest.raises(RuntimeError, match="Smart App Control"):
+        FaceTracker(model)

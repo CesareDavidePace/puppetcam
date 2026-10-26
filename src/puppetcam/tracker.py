@@ -28,6 +28,18 @@ MODEL_URL = (
 )
 
 
+# WinError 4551: Smart App Control (Windows 11) or an App Control for Business policy
+# refused to load MediaPipe's DLL, which is not code-signed.
+_WIN_APP_CONTROL = 4551
+APP_CONTROL_HELP = """\
+Windows blocked MediaPipe's face tracking library (Smart App Control).
+puppetcam needs it, and it can't be signed by us: it ships with Google's mediapipe package.
+  Personal PC: Windows Security > App & browser control > Smart App Control settings > Off.
+               Check before turning it off: on some Windows versions it can't be turned
+               back on without resetting Windows.
+  Work PC:     the policy comes from your IT department; ask them to allow mediapipe."""
+
+
 @dataclass
 class FaceObservation:
     """One tracked frame. Angles are in degrees, raw (not calibrated)."""
@@ -141,7 +153,12 @@ class FaceTracker:
             except Exception as exc:
                 log.warning("GPU delegate unavailable, using CPU: %s", exc)
         if self.delegate == "cpu":
-            self._landmarker = create(BaseOptions.Delegate.CPU)
+            try:
+                self._landmarker = create(BaseOptions.Delegate.CPU)
+            except OSError as exc:
+                if getattr(exc, "winerror", None) == _WIN_APP_CONTROL:
+                    raise RuntimeError(APP_CONTROL_HELP) from exc
+                raise
         log.info("Face tracker running on %s", self.delegate.upper())
         self._create_cpu = lambda: create(BaseOptions.Delegate.CPU)
         self.input_width = input_width

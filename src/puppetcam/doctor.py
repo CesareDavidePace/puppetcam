@@ -31,6 +31,13 @@ def _check_model() -> tuple[str, str]:
     return OK, f"face model at {ensure_model()}"
 
 
+def _check_tracker() -> tuple[str, str]:
+    from .tracker import FaceTracker
+
+    FaceTracker().close()  # loads MediaPipe's native library, which Windows may block
+    return OK, "face tracker (MediaPipe) loads"
+
+
 def _check_camera(index: int) -> Callable[[], tuple[str, str]]:
     def check() -> tuple[str, str]:
         from .capture import open_camera
@@ -77,6 +84,7 @@ def run_checks(camera: int = 0, vcam: bool = True) -> bool:
     checks: list[tuple[str, Callable[[], tuple[str, str]], bool]] = [
         ("python", _check_python, True),
         ("face model", _check_model, True),
+        ("face tracker", _check_tracker, True),
         ("camera", _check_camera(camera), True),
         ("microphone", _check_mic, False),
     ]
@@ -88,7 +96,8 @@ def run_checks(camera: int = 0, vcam: bool = True) -> bool:
             status, msg = check()
         except Exception as exc:  # report everything, stop at nothing
             status = FAIL if required else WARN
-            msg = f"{name}: {str(exc).strip().splitlines()[0]}"
+            lines = str(exc).strip().splitlines()
+            msg = f"{name}: {lines[0]}" + "".join(f"\n       {line}" for line in lines[1:])
             if name in _HINTS:
                 msg += f"\n       -> {_HINTS[name]}"
         print(f"[{status}] {msg}")

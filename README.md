@@ -60,6 +60,11 @@ Preview window keys: `q` quit · `c` recalibrate · `a` toggle away mode · `b` 
 ### Platform notes
 
 **Windows**
+- If you get `WinError 4551` ("An Application Control policy has blocked this file"),
+  Windows 11's **Smart App Control** is blocking MediaPipe's library, which isn't code-signed.
+  On a personal PC you can turn it off in Windows Security → App & browser control → Smart App
+  Control settings (check first: on some Windows versions it can't be turned back on without
+  resetting Windows). On a work PC, ask your IT department. `puppetcam doctor` detects this.
 - The camera is opened with DirectShow + MJPG: it starts in well under a second, where
   Media Foundation can take several.
 - Use Python 3.11 or newer: older versions sleep in ~15 ms steps on Windows, which makes the

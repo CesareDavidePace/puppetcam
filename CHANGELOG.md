@@ -5,6 +5,9 @@
 - Eyes no longer shrink when you turn your head: MediaPipe reads the far eye as half closed
   (blink score up to ~0.25) while it's open, so small blink scores are now ignored.
 - Gentler 3D narrowing of the far eye (25% at full turn, was 40%).
+- Windows 11: when Smart App Control blocks MediaPipe (`WinError 4551`), puppetcam explains how
+  to fix it instead of crashing with a traceback.
+- `puppetcam doctor` now actually loads the face tracker, so it catches that block too.
 
 ## 0.1.0
 
