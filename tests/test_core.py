@@ -176,3 +176,11 @@ def test_sensitivity_boosts_small_movements_only():
     assert boosted.smile > 1.5 * base.smile
     big = obs(jawOpen=0.45)
     assert observation_to_params(big, neutral, MappingConfig(sensitivity=1.5)).mouth_open == 1.0
+
+
+def test_turning_head_does_not_half_close_eyes():
+    # Measured: at 30-35 degrees of yaw the far eye scores ~0.25 while wide open.
+    p = observation_to_params(obs(eyeBlinkLeft=0.25), Neutral(blink_l=0.04, blink_r=0.04), MappingConfig())
+    assert p.eye_open_r == pytest.approx(1.0)
+    blink = observation_to_params(obs(eyeBlinkLeft=0.6), Neutral(blink_l=0.04, blink_r=0.04), MappingConfig())
+    assert blink.eye_open_r == pytest.approx(0.0)

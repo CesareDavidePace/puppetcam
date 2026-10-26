@@ -195,7 +195,7 @@ class SproutAvatar(Avatar):
         es, spacing = s["eye_size"], 0.38 * s["eye_spacing"]
         lens_centers = []
         for side, open_ in ((-1.0, p.eye_open_l), (1.0, p.eye_open_r)):
-            sx = 1.0 - 0.40 * max(0.0, side * yaw)  # far-side eye narrows
+            sx = 1.0 - 0.25 * max(0.0, side * yaw)  # far-side eye narrows (gently: yaw is boosted)
             ex0, ey0 = fpos(side * spacing, -0.02)
             lens_centers.append((ex0, ey0, sx))
             ex, ey = ex0 + p.gaze_x * 0.05, ey0 - p.gaze_y * 0.04

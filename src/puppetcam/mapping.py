@@ -39,6 +39,9 @@ class MappingConfig:
     invert_roll: bool = False
     swap_eyes: bool = False  # flip if the avatar winks with the wrong eye
     blink_closed: float = 0.55  # eyeBlink score at which the eye counts as closed
+    # eyeBlink rises to ~0.25 on the far eye when you turn your head, or when you look down,
+    # with the eye still open. Up to this much above rest, the eye stays fully open.
+    blink_deadzone: float = 0.25
     jaw_full_open: float = 0.45  # jawOpen score mapped to mouth_open = 1
     smile_gain: float = 1.6
     brow_gain: float = 1.8
@@ -130,8 +133,9 @@ def observation_to_params(
         roll = -roll
 
     def eye_open(blink: float, base: float) -> float:
-        span = max(cfg.blink_closed - base, 0.1)
-        return 1.0 - _clamp((blink - base) / span)
+        start = base + cfg.blink_deadzone
+        span = max(cfg.blink_closed - start, 0.1)
+        return 1.0 - _clamp((blink - start) / span)
 
     eye_l = eye_open(obs.bs("eyeBlinkRight"), neutral.blink_l)
     eye_r = eye_open(obs.bs("eyeBlinkLeft"), neutral.blink_r)
