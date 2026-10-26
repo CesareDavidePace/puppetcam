@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "puppetcam"
-version = "0.1.0"
+dynamic = ["version"]  # from puppetcam.__version__, the only place to bump it
 description = "An animated avatar for your video calls. Runs 100% locally on CPU, no training, no cloud."
 readme = "README.md"
 license = "MIT"
@@ -45,6 +45,9 @@ sprout = "puppetcam.avatars.sprout:SproutAvatar"
 [project.urls]
 Homepage = "https://github.com/cesaredavidepace/puppetcam"
 Issues = "https://github.com/cesaredavidepace/puppetcam/issues"
+
+[tool.setuptools.dynamic]
+version = { attr = "puppetcam.__version__" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
