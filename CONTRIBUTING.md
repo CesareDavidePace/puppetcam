@@ -32,7 +32,10 @@ src/puppetcam/
   themes.py      theme files: colors, proportions, accessories, background
   themes/        built-in themes (.toml), sprout.toml documents every option
   platform_tweaks.py  App Nap (macOS), EcoQoS (Windows); best-effort, never raises
-  app.py         wires everything for the live app
+  app.py         wires everything for the live app (Session: start, stop, live changes)
+  settings.py    the saved settings file (settings.toml) shared by the CLI and the tray
+  tray.py        menu bar / tray app (pystray)
+  autostart.py   start at login: LaunchAgent, HKCU Run key, XDG autostart
   avatars/       Avatar base class, registry, default "sprout" avatar
   tools.py       benchmark and demo rendering
 ```
@@ -54,6 +57,23 @@ src/puppetcam/
 Themes are plain TOML. Add yours to `src/puppetcam/themes/` with a short name, check it with
 `puppetcam themes --check`, and include a screenshot in the PR. The tests render every built-in
 theme automatically.
+
+## Building the installers
+
+CI builds them on every tag (`.github/workflows/installers.yml`). To build one locally
+(on the OS you're targeting):
+
+```bash
+pip install -e . pyinstaller
+python packaging/download_model.py     # bundles the face model inside the package
+python packaging/make_icons.py         # renders the app icon from the avatar
+pyinstaller --noconfirm packaging/puppetcam.spec
+packaging/macos/build_dmg.sh           # macOS: dist/Puppetcam-<version>-macos-arm64.dmg
+iscc packaging\windows\puppetcam.iss    # Windows: needs Inno Setup 6
+```
+
+The frozen app runs the CLI when given arguments, e.g.
+`dist/Puppetcam.app/Contents/MacOS/puppetcam doctor`.
 
 ## Pull requests
 

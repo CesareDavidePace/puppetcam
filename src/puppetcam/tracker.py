@@ -58,10 +58,16 @@ class FaceObservation:
         return self.blendshapes.get(name, 0.0)
 
 
+# The installers ship the model here, so they never download it. pip installs don't.
+BUNDLED_MODEL = Path(__file__).parent / "models" / "face_landmarker.task"
+
+
 def default_model_path() -> Path:
     env = os.environ.get("PUPPETCAM_MODEL")
     if env:
         return Path(env)
+    if BUNDLED_MODEL.exists():
+        return BUNDLED_MODEL
     if os.name == "nt":
         base = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local"))
     else:
@@ -82,7 +88,7 @@ def _ssl_context() -> ssl.SSLContext:
 def ensure_model(path: Path | None = None, download: bool = True) -> Path:
     """Return a local model path, downloading it once (a few MB) if missing.
 
-    This is the only network access the app ever makes.
+    This is the only network access the app ever makes, and the installed apps skip it.
     """
     path = Path(path) if path else default_model_path()
     if path.exists() and path.stat().st_size > 0:

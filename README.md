@@ -15,6 +15,8 @@ mouth. Zoom, Meet, Teams and anything else just see a normal webcam.
 - **Away mode:** step away and the avatar keeps blinking, breathing and lip-syncing
   to your microphone instead of freezing.
 - **Yours:** colors, proportions, accessories and background come from a small theme file.
+- **No terminal needed:** an installer for macOS and Windows, and a menu bar / tray icon to turn
+  it on and off, change theme and sensitivity, and start it at login.
 - **Hackable:** an avatar is one Python class. Add your own as a plugin.
 
 > Status: alpha. Expect rough edges, and please open issues.
@@ -29,13 +31,22 @@ mouth. Zoom, Meet, Teams and anything else just see a normal webcam.
 | macOS | OBS Studio 30+. Start and stop its Virtual Camera once, allow it (see below), then quit OBS. |
 | Linux | `sudo apt install v4l2loopback-dkms` then `sudo modprobe v4l2loopback devices=1 exclusive_caps=1 card_label="puppetcam"` |
 
-**2. Install and run** (Python 3.11+; on Windows use 3.11 or 3.12, see [platform notes](#platform-notes)):
+**2. Install puppetcam**, either way:
 
-```bash
-pip install puppetcam
-puppetcam doctor     # checks camera, face model, microphone and virtual camera
-puppetcam
-```
+- **The app (no terminal):** download the installer from the
+  [latest release](https://github.com/cesaredavidepace/puppetcam/releases/latest):
+  `Puppetcam-…-macos-arm64.dmg` (Apple Silicon) or `Puppetcam-…-windows-setup.exe`.
+  The face model is included, so nothing is downloaded on first run.
+  On macOS drag Puppetcam to Applications and open it; it lives in the menu bar.
+  On Windows it lives in the tray, next to the clock. See [installing the app](#installing-the-app)
+  if your system warns about it.
+- **With pip** (Python 3.11+; on Windows use 3.11 or 3.12, see [platform notes](#platform-notes)):
+
+  ```bash
+  pip install puppetcam
+  puppetcam doctor     # checks camera, face model, microphone and virtual camera
+  puppetcam            # with a preview window; or: puppetcam tray
+  ```
 
 Look at the camera for half a second with a relaxed face while it calibrates. Then in your
 meeting app pick **"OBS Virtual Camera"** (or "puppetcam" on Linux) as the camera.
@@ -44,6 +55,39 @@ meeting app pick **"OBS Virtual Camera"** (or "puppetcam" on Linux) as the camer
 > If you start the Virtual Camera from OBS, you'll see OBS's (empty) scene instead of the avatar.
 
 Preview window keys: `q` quit · `c` recalibrate · `a` toggle away mode · `b` toggle the AVATAR badge.
+
+### The menu bar / tray icon
+
+The installed app, or `puppetcam tray`, puts the avatar's face in the macOS menu bar or the
+Windows tray (grey when the camera is off). From its menu:
+
+- **Avatar camera** on/off, **Recalibrate**, **Away mode**
+- **Theme**, **Sensitivity**, **Camera**, **Show AVATAR badge**
+- **Start at login**, **Open settings file**, **Open log** (attach it to bug reports)
+
+If something fails (no virtual camera, webcam busy) the first line of the menu says so;
+click it for help. Every change is saved, so a terminal `puppetcam` starts the same way.
+On Linux the tray needs `pip install "puppetcam[tray]"` and a desktop with a tray area.
+
+### Settings
+
+Your choices are saved in `settings.toml`, so you don't need flags every time:
+
+| OS | Where |
+| --- | --- |
+| Windows | `%APPDATA%\puppetcam\settings.toml` |
+| macOS | `~/Library/Application Support/puppetcam/settings.toml` |
+| Linux | `~/.config/puppetcam/settings.toml` |
+
+```bash
+puppetcam --theme winter --sensitivity 2 --save   # try options and keep them
+puppetcam settings                                # show the current settings and the file
+puppetcam settings --edit                         # open it in a text editor
+puppetcam settings --reset                        # back to the defaults
+```
+
+Flags always win over the file for that run: with `badge = false` saved,
+`puppetcam --badge` shows it once.
 
 ### In Google Meet, Microsoft Teams and Zoom
 
@@ -56,6 +100,19 @@ Preview window keys: `q` quit · `c` recalibrate · `a` toggle away mode · `b` 
 - Your own self-view may show the AVATAR badge mirrored. Others see it the right way round.
 - Small expressions too subtle? Try `puppetcam --sensitivity 2` (default 1.5), and press `c`
   to recalibrate with a relaxed face. If the avatar jitters while you're still, go down to 1.2.
+
+### Installing the app
+
+- **macOS:** if macOS says the app "can't be opened" or is from an unidentified developer,
+  open **System Settings → Privacy & Security**, scroll down and click **Open Anyway** (needed
+  once, until the app is notarized). The first time you turn the camera on, macOS asks for
+  camera and microphone access for Puppetcam. Intel Macs: use the pip install.
+- **Windows:** the installer needs no admin rights and installs to your user folder. If
+  SmartScreen shows "Windows protected your PC", click **More info → Run anyway** (until the
+  installer is code-signed). With **Smart App Control** on, Windows blocks unsigned apps entirely:
+  use the pip install with Python 3.12 for now.
+- Uninstalling: drag Puppetcam to the Trash (macOS), or Settings → Apps (Windows). Your settings
+  file stays, delete it by hand if you like.
 
 ### Platform notes
 
@@ -94,7 +151,12 @@ Run `puppetcam doctor` and paste its output into a
 [new issue](https://github.com/cesaredavidepace/puppetcam/issues/new/choose). It shows your OS,
 Python, camera, microphone and virtual camera status in a few lines.
 
+Using the installed app? Attach the log instead (menu → **Open log**), or run the doctor from it:
+`/Applications/Puppetcam.app/Contents/MacOS/puppetcam doctor` on macOS.
+
 ## Useful options
+
+All of them can be saved with `--save` (see [settings](#settings)).
 
 ```bash
 puppetcam --size 1280x720          # output resolution (default 960x540)
@@ -199,19 +261,20 @@ What's coming next. Priorities follow your feedback: open an
 [issue](https://github.com/cesaredavidepace/puppetcam/issues/new/choose) or a
 [discussion](https://github.com/cesaredavidepace/puppetcam/discussions) to push for something.
 
-**v0.1 — now: for people comfortable with a terminal**
+**v0.1 — for people comfortable with a terminal**
 
 - [x] Cartoon avatar as a virtual camera for Meet, Teams, Zoom and any other app
 - [x] Away mode, themes, avatar plugins
 - [x] `--sensitivity` for small movements, `puppetcam doctor` to check your setup
 
-**v0.2 — no terminal needed**
+**v0.2 — now: no terminal needed**
 
-- [ ] Settings saved in a file: theme, camera, sensitivity, badge. No more command-line flags
-- [ ] Menu bar app (macOS) and tray app (Windows): on/off, theme, sensitivity, recalibrate,
+- [x] Settings saved in a file: theme, camera, sensitivity, badge. No more command-line flags
+- [x] Menu bar app (macOS) and tray app (Windows): on/off, theme, sensitivity, recalibrate,
       start at login
-- [ ] One-click installers: a signed app for macOS and an installer for Windows, with the face
+- [x] One-click installers: an app for macOS and an installer for Windows, with the face
       model included (no download on first run)
+- [ ] Code-signed and notarized installers, so macOS and Windows open them without warnings
 
 **v0.3 — make your own character**
 
@@ -227,5 +290,7 @@ What's coming next. Priorities follow your feedback: open an
 
 ## License
 
-MIT, see [LICENSE](LICENSE). The face model is downloaded from Google's MediaPipe
-model storage and is not redistributed here; it is covered by its own model card and license.
+MIT, see [LICENSE](LICENSE). The face model comes from Google's MediaPipe model storage and is
+covered by its own model card and license (see the
+[Face Landmarker page](https://ai.google.dev/edge/mediapipe/solutions/vision/face_landmarker#models)).
+The pip package downloads it on first run; the installers include it.

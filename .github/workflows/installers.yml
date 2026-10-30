@@ -1,0 +1,142 @@
+name: Installers
+
+# Builds Puppetcam.app (.dmg) and the Windows installer (.exe), face model included.
+# On a tag like v0.2.0 it creates the GitHub release, with that version's CHANGELOG.md
+# section as notes and both installers attached. A manual run only keeps them as
+# workflow artifacts (Actions tab -> run -> Artifacts).
+#
+# Signing is optional and turns on when these repository secrets exist:
+#   macOS   MACOS_CERT_P12 (base64 Developer ID Application .p12), MACOS_CERT_PASSWORD,
+#           MACOS_SIGN_IDENTITY, and for notarization APPLE_ID, APPLE_TEAM_ID, APPLE_APP_PASSWORD
+#   Windows WINDOWS_CERT_PFX (base64 code signing .pfx), WINDOWS_CERT_PASSWORD
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write  # attach files to the release
+
+jobs:
+  macos:
+    runs-on: macos-latest  # Apple Silicon
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install . pyinstaller
+      - run: python packaging/download_model.py
+      - run: python packaging/make_icons.py
+      - name: Import signing certificate
+        env:
+          MACOS_CERT_P12: ${{ secrets.MACOS_CERT_P12 }}
+          MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+        if: env.MACOS_CERT_P12 != ''
+        run: |
+          KEYCHAIN=$RUNNER_TEMP/build.keychain
+          echo "$MACOS_CERT_P12" | base64 --decode > $RUNNER_TEMP/cert.p12
+          security create-keychain -p ci "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p ci "$KEYCHAIN"
+          security import $RUNNER_TEMP/cert.p12 -k "$KEYCHAIN" -P "$MACOS_CERT_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k ci "$KEYCHAIN"
+          security list-keychains -d user -s "$KEYCHAIN"
+      - run: pyinstaller --noconfirm packaging/puppetcam.spec
+        env:
+          MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}  # empty = ad-hoc
+      - name: Smoke test the frozen app
+        run: |
+          dist/Puppetcam.app/Contents/MacOS/puppetcam themes
+          dist/Puppetcam.app/Contents/MacOS/puppetcam download-model | grep "Puppetcam.app"
+      - name: Sign, package, notarize
+        env:
+          MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: packaging/macos/build_dmg.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: dist/*.dmg
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"  # MediaPipe 0.10.21, which Smart App Control allows
+      - run: pip install . pyinstaller
+      - run: python packaging/download_model.py
+      - run: python packaging/make_icons.py
+      - run: pyinstaller --noconfirm packaging/puppetcam.spec
+      - name: Smoke test the frozen app
+        shell: pwsh
+        run: |
+          $p = Start-Process dist\puppetcam\puppetcam.exe -ArgumentList "bench","--sizes","320x180" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "puppetcam.exe exited with $($p.ExitCode)" }
+      - name: Signing tool
+        id: sign
+        shell: pwsh
+        env:
+          WINDOWS_CERT_PFX: ${{ secrets.WINDOWS_CERT_PFX }}
+        run: |
+          if (-not $env:WINDOWS_CERT_PFX) { "enabled=false" >> $env:GITHUB_OUTPUT; exit 0 }
+          [IO.File]::WriteAllBytes("$env:RUNNER_TEMP\cert.pfx", [Convert]::FromBase64String($env:WINDOWS_CERT_PFX))
+          $tool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\signtool.exe" |
+            Sort-Object FullName -Descending | Select-Object -First 1
+          "enabled=true" >> $env:GITHUB_OUTPUT
+          "tool=$($tool.FullName)" >> $env:GITHUB_OUTPUT
+      - name: Sign the app
+        if: steps.sign.outputs.enabled == 'true'
+        shell: pwsh
+        run: >
+          & "${{ steps.sign.outputs.tool }}" sign /fd SHA256 /td SHA256 /tr http://timestamp.digicert.com
+          /f "$env:RUNNER_TEMP\cert.pfx" /p "${{ secrets.WINDOWS_CERT_PASSWORD }}"
+          dist\puppetcam\puppetcam.exe
+      - name: Build the installer
+        shell: pwsh
+        run: |
+          if (-not (Get-Command iscc -ErrorAction SilentlyContinue)) {
+            choco install innosetup -y --no-progress
+            $env:PATH += ";${env:ProgramFiles(x86)}\Inno Setup 6"
+          }
+          $version = python -c "import puppetcam; print(puppetcam.__version__)"
+          iscc /DAppVersion=$version packaging\windows\puppetcam.iss
+      - name: Sign the installer
+        if: steps.sign.outputs.enabled == 'true'
+        shell: pwsh
+        run: >
+          & "${{ steps.sign.outputs.tool }}" sign /fd SHA256 /td SHA256 /tr http://timestamp.digicert.com
+          /f "$env:RUNNER_TEMP\cert.pfx" /p "${{ secrets.WINDOWS_CERT_PASSWORD }}"
+          (Get-Item dist\Puppetcam-*-windows-setup.exe).FullName
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: dist/*-windows-setup.exe
+
+  release:
+    needs: [macos, windows]
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Release notes from CHANGELOG.md
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk -v v="## $VERSION" '$0 == v {on=1; next} /^## / {on=0} on' CHANGELOG.md > notes.md
+          test -s notes.md || { echo "No '## $VERSION' section in CHANGELOG.md"; exit 1; }
+          cat notes.md
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: puppetcam ${{ github.ref_name }}
+          body_path: notes.md
+          files: |
+            dist/*.dmg
+            dist/*-windows-setup.exe

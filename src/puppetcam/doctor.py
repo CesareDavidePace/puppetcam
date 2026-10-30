@@ -25,6 +25,14 @@ def _check_python() -> tuple[str, str]:
     return OK, f"Python {platform.python_version()} ({platform.machine()})"
 
 
+def _check_settings() -> tuple[str, str]:
+    from .settings import load_settings, settings_path
+
+    load_settings()
+    path = settings_path()
+    return OK, f"settings in {path}" if path.exists() else f"settings: defaults (no {path} yet)"
+
+
 def _check_model() -> tuple[str, str]:
     from .tracker import ensure_model
 
@@ -83,6 +91,7 @@ def run_checks(camera: int = 0, vcam: bool = True) -> bool:
     print(f"puppetcam {__version__} on {platform.platform()}")
     checks: list[tuple[str, Callable[[], tuple[str, str]], bool]] = [
         ("python", _check_python, True),
+        ("settings", _check_settings, True),
         ("face model", _check_model, True),
         ("face tracker", _check_tracker, True),
         ("camera", _check_camera(camera), True),
