@@ -15,15 +15,14 @@ mouth. Zoom, Meet, Teams and anything else just see a normal webcam.
 - **Away mode:** step away and the avatar keeps blinking, breathing and lip-syncing
   to your microphone instead of freezing.
 - **Yours:** colors, proportions, accessories and background come from a small theme file.
-- **Coming in 0.2.0 — no terminal needed:** an installer for macOS and Windows, and a menu bar / tray icon to turn
+- **No terminal needed:** an installer for macOS and Windows, and a menu bar / tray icon to turn
   it on and off, change theme and sensitivity, and start it at login.
 - **Hackable:** an avatar is one Python class. Add your own as a plugin.
 
 > Status: alpha. Expect rough edges, and please open issues.
 >
-> **Latest published version: 0.1.1. Version 0.2.0 is still in development.**
-> Installers, the menu bar / tray app and saved settings described below are upcoming 0.2.0
-> features; they are not included in `pip install puppetcam` yet.
+> This README describes **puppetcam 0.2.0**, including installers, the menu bar / tray app
+> and saved settings. If you're using 0.1.1, upgrade to use these features.
 
 ## Quick start
 
@@ -47,9 +46,12 @@ If you use **pipx**, install with `pipx install puppetcam` instead, then run the
 `puppetcam doctor` and `puppetcam` commands. This installation method was used in the Linux
 Mint community report below.
 
-**Coming in 0.2.0:** macOS (Apple Silicon) and Windows installers with the face model included.
-They will be available on the [releases page](https://github.com/cesaredavidepace/puppetcam/releases)
-once 0.2.0 is published. See [installing the app](#installing-the-app) for the planned setup.
+**Prefer an app without a terminal?** Download the macOS (Apple Silicon) or Windows installer
+from the [releases page](https://github.com/cesaredavidepace/puppetcam/releases).
+Both include the face model. See [installing the app](#installing-the-app) for setup.
+
+Upgrading from an earlier version? Run `pip install --upgrade puppetcam`, or
+`pipx upgrade puppetcam` if you installed with pipx.
 
 Look at the camera for half a second with a relaxed face while it calibrates. Then in your
 meeting app pick **"OBS Virtual Camera"** (or "puppetcam" on Linux) as the camera.
@@ -60,8 +62,6 @@ meeting app pick **"OBS Virtual Camera"** (or "puppetcam" on Linux) as the camer
 Preview window keys: `q` quit · `c` recalibrate · `a` toggle away mode · `b` toggle the AVATAR badge.
 
 ### The menu bar / tray icon
-
-*Available in the upcoming 0.2.0 release.*
 
 The installed app, or `puppetcam tray`, puts the avatar's face in the macOS menu bar or the
 Windows tray (grey when the camera is off). From its menu:
@@ -75,8 +75,6 @@ click it for help. Every change is saved, so a terminal `puppetcam` starts the s
 On Linux the tray needs `pip install "puppetcam[tray]"` and a desktop with a tray area.
 
 ### Settings
-
-*Available in the upcoming 0.2.0 release; `--save` is not supported in 0.1.1.*
 
 Your choices are saved in `settings.toml`, so you don't need flags every time:
 
@@ -110,8 +108,9 @@ Flags always win over the file for that run: with `badge = false` saved,
 
 ### Installing the app
 
-*The installers are planned for 0.2.0 and are not published yet. Use the pip or pipx
-instructions above for 0.1.1.*
+Download `Puppetcam-0.2.0-macos-arm64.dmg` (Apple Silicon) or
+`Puppetcam-0.2.0-windows-setup.exe` from the
+[releases page](https://github.com/cesaredavidepace/puppetcam/releases).
 
 - On macOS, drag Puppetcam to Applications and open it; it lives in the menu bar.
   On Windows, run the installer; Puppetcam lives in the tray, next to the clock.
@@ -307,9 +306,7 @@ What's coming next. Priorities follow your feedback: open an
 - [x] Away mode, themes, avatar plugins
 - [x] `--sensitivity` for small movements, `puppetcam doctor` to check your setup
 
-**v0.2 — in development, not yet released: no terminal needed**
-
-Checked items below are implemented on this branch; release installers are not published yet.
+**v0.2 — no terminal needed**
 
 - [x] Settings saved in a file: theme, camera, sensitivity, badge. No more command-line flags
 - [x] Menu bar app (macOS) and tray app (Windows): on/off, theme, sensitivity, recalibrate,
