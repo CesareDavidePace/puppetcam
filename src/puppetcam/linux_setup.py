@@ -20,13 +20,13 @@ import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 LABEL = "puppetcam"
 MODULE = "v4l2loopback"
 OPTIONS = f'devices=1 exclusive_caps=1 card_label="{LABEL}"'
-MODULES_LOAD = Path("/etc/modules-load.d/puppetcam.conf")
-MODPROBE_CONF = Path("/etc/modprobe.d/puppetcam.conf")
+MODULES_LOAD = PurePosixPath("/etc/modules-load.d/puppetcam.conf")  # in a sh script
+MODPROBE_CONF = PurePosixPath("/etc/modprobe.d/puppetcam.conf")
 SYS_MODULE = Path("/sys/module") / MODULE
 SYS_VIDEO = Path("/sys/class/video4linux")
 
@@ -85,7 +85,7 @@ def _module_installed() -> bool:
 
 
 def _persistent() -> bool:
-    if MODULES_LOAD.exists():
+    if Path(MODULES_LOAD).exists():
         return True
     for folder in ("/etc/modules-load.d", "/usr/lib/modules-load.d", "/lib/modules-load.d"):
         try:
