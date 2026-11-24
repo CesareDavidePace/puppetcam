@@ -171,11 +171,22 @@ def test_tray_start_stop_and_live_changes(tray, settings_file):
     assert not tray.running and tray.status() == "Avatar camera is off"
 
 
-def test_tray_reports_startup_errors(tray):
+def test_tray_reports_startup_errors(tray, monkeypatch):
+    monkeypatch.setattr(type(tray), "needs_vcam_setup", lambda self: False)
     FakeSession.fail_on_init = RuntimeError("No virtual camera backend found. Install one:\n  ...")
     tray.start()
     assert not tray.running
     assert tray.status() == "⚠ No virtual camera backend found. Install one:"
+
+
+def test_tray_offers_linux_setup(tray, monkeypatch):
+    from puppetcam import linux_setup
+
+    monkeypatch.setattr(sys, "platform", "linux")
+    monkeypatch.setattr(linux_setup, "status", lambda: linux_setup.VcamStatus(True, False, False, []))
+    FakeSession.fail_on_init = RuntimeError("No virtual camera backend found. Install one:\n  ...")
+    tray.start()
+    assert tray.status() == "⚠ No virtual camera: click to set it up"
 
 
 def test_tray_icon_and_single_instance(tmp_path):

@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.2.1
+
+Fixes from the first Linux report ([#1](https://github.com/cesaredavidepace/puppetcam/issues/1)),
+and Linux without the fiddly parts.
+
+- **Up/down head movement is no longer reversed.** MediaPipe's head pitch is positive when the chin
+  goes down; the avatar's is positive when you look up. This affected every OS. If you saved
+  `invert_pitch = true` as a workaround, remove it: `puppetcam --no-invert-pitch --save`.
+- **`puppetcam setup` (Linux):** one command, one password prompt. Installs `v4l2loopback` if it's
+  missing (apt-based distros; others get the exact command), keeps the virtual camera after reboots
+  and adds Puppetcam to the applications menu. `--dry-run` shows the root commands.
+- Linux: Qt dialogs of the preview window show their text again. Some OpenCV wheels (4.13, 5.0)
+  ship Qt without fonts; puppetcam now points Qt at the system fonts. The preview window also
+  drops Qt's toolbar and status bar.
+- Closing the preview window with its close button quits, like `q` (on Linux, Qt reopened it).
+- The tray app is installed on Linux too (no more `[tray]` extra); when the virtual camera is
+  missing, its first menu line offers to set it up.
+- `puppetcam doctor` warns when the Linux virtual camera won't survive a reboot.
+
 ## 0.2.0
 
 No terminal needed.

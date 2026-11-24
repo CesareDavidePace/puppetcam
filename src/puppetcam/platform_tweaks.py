@@ -4,12 +4,16 @@
   (puppetcam always runs behind your meeting app).
 - Windows: EcoQoS ("efficiency mode") for the sensor thread while you're away,
   so the slow presence check runs on efficient cores at low clocks.
+- Linux: point the Qt that ships inside OpenCV at the system fonts, or its
+  dialogs show no text.
 """
 
 from __future__ import annotations
 
 import logging
+import os
 import sys
+from pathlib import Path
 
 log = logging.getLogger(__name__)
 
@@ -29,6 +33,57 @@ def disable_app_nap() -> bool:
     except Exception as exc:
         log.warning("Could not disable App Nap (pip install appnope): %s", exc)
     return _appnope_ok
+
+
+# Folders with plain .ttf files, most readable first. Qt scans one folder, not a tree.
+_FONT_DIRS = (
+    "/usr/share/fonts/truetype/dejavu",  # Debian, Ubuntu, Mint
+    "/usr/share/fonts/dejavu-sans-fonts",  # Fedora
+    "/usr/share/fonts/dejavu",
+    "/usr/share/fonts/TTF",  # Arch
+    "/usr/share/fonts/truetype/liberation",
+    "/usr/share/fonts/truetype/noto",
+    "/usr/share/fonts/noto",
+)
+
+
+def _has_fonts(folder: Path) -> bool:
+    try:
+        return any(f.suffix.lower() in (".ttf", ".otf") for f in folder.iterdir())
+    except OSError:
+        return False
+
+
+def find_font_dir(candidates=_FONT_DIRS, root: str = "/usr/share/fonts") -> str | None:
+    for d in candidates:
+        if _has_fonts(Path(d)):
+            return d
+    try:  # anything else with fonts in it, sorted for a stable pick
+        for folder in sorted(p for p in Path(root).rglob("*") if p.is_dir()):
+            if _has_fonts(folder):
+                return str(folder)
+    except OSError:
+        pass
+    return None
+
+
+def fix_qt_fonts() -> str | None:
+    """Linux: make sure OpenCV's bundled Qt finds fonts. Call before the first window.
+
+    ``import cv2`` points ``QT_QPA_FONTDIR`` at ``cv2/qt/fonts``, which several opencv
+    wheels don't ship: the preview still works (it's an image), but Qt's own dialogs,
+    such as the one Ctrl+S opens, show no text. Use the system fonts in that case.
+    """
+    if not sys.platform.startswith("linux"):
+        return None
+    current = os.environ.get("QT_QPA_FONTDIR")
+    if current and _has_fonts(Path(current)):
+        return current
+    folder = find_font_dir()
+    if folder:
+        os.environ["QT_QPA_FONTDIR"] = folder
+        log.debug("Qt fonts from %s (not in %s)", folder, current)
+    return folder
 
 
 # Values from processthreadsapi.h / winnt.h

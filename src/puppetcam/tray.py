@@ -204,8 +204,40 @@ class TrayApp:
         except OSError as exc:
             self._fail(exc)
 
+    def needs_vcam_setup(self) -> bool:
+        """Linux without a working virtual camera: `puppetcam setup` fixes it."""
+        if not sys.platform.startswith("linux"):
+            return False
+        from .linux_setup import status
+
+        try:
+            return not status().ready
+        except OSError:
+            return False
+
+    def setup_vcam(self) -> None:
+        """Linux: run the virtual camera setup (the desktop asks for the password), then start."""
+        from . import linux_setup
+
+        def work():
+            try:
+                linux_setup.setup_vcam(gui=True, say=log.info)
+            except Exception as exc:
+                self._fail(exc)
+                return
+            try:
+                linux_setup.install_menu_entry()
+            except Exception:
+                log.debug("menu entry not added", exc_info=True)
+            self.error = None
+            _on_main_thread(self.start)
+
+        threading.Thread(target=work, name="puppetcam-setup", daemon=True).start()
+
     # -- the icon
     def status(self) -> str:
+        if self.error and self.needs_vcam_setup():
+            return "⚠ No virtual camera: click to set it up"
         if self.error:
             return f"⚠ {self.error}"
         return "Avatar camera is on" if self.running else "Avatar camera is off"
@@ -238,7 +270,9 @@ class TrayApp:
         from pystray import MenuItem as Item
 
         def status_clicked(icon, item):
-            if self.error:
+            if self.error and self.needs_vcam_setup():
+                self.setup_vcam()
+            elif self.error:
                 webbrowser.open(HELP_URL)
 
         def sensitivity(value):
@@ -323,7 +357,7 @@ def main() -> None:
     try:
         import pystray  # noqa: F401
     except ImportError as exc:
-        raise SystemExit(f"The tray app needs pystray: pip install 'puppetcam[tray]' ({exc})") from None
+        raise SystemExit(f"The tray app needs pystray: pip install --upgrade puppetcam ({exc})") from None
     try:
         lock = SingleInstance(config_dir() / "tray.lock")  # noqa: F841 - held until exit
         settings = load_settings()

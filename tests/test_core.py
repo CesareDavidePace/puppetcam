@@ -61,6 +61,18 @@ def test_rotation_to_euler_identity():
     assert rotation_to_euler_deg(np.eye(4)) == pytest.approx((0.0, 0.0, 0.0), abs=1e-9)
 
 
+def test_looking_up_is_positive_pitch():
+    # MediaPipe's face frame: x right, y up, z out of the face towards the camera.
+    # Looking up turns the nose (+z) towards +y: a rotation about x by -20 degrees.
+    a = np.deg2rad(-20.0)
+    rot = np.array([[1, 0, 0], [0, np.cos(a), -np.sin(a)], [0, np.sin(a), np.cos(a)]])
+    assert (rot @ [0, 0, 1])[1] > 0  # the nose really points up
+    pitch, yaw, roll = rotation_to_euler_deg(rot)
+    assert pitch == pytest.approx(20.0)
+    p = observation_to_params(obs(pitch=pitch), Neutral(), MappingConfig())
+    assert p.pitch > 0.5  # the avatar looks up too (issue #1)
+
+
 def test_calibrator_handles_angle_wraparound():
     c = Calibrator(samples=2)
     c.feed(obs(pitch=179.0))

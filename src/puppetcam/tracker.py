@@ -46,7 +46,7 @@ older ones load fine but need Python 3.11 or 3.12:
 
 @dataclass
 class FaceObservation:
-    """One tracked frame. Angles are in degrees, raw (not calibrated)."""
+    """One tracked frame. Angles are in degrees, raw (not calibrated). Pitch > 0 = looking up."""
 
     t: float
     pitch: float
@@ -113,10 +113,14 @@ def ensure_model(path: Path | None = None, download: bool = True) -> Path:
 
 
 def rotation_to_euler_deg(rot: np.ndarray) -> tuple[float, float, float]:
-    """3x3 rotation -> (pitch, yaw, roll) in degrees (x, y, z axes)."""
+    """3x3 rotation -> (pitch, yaw, roll) in degrees (x, y, z axes).
+
+    Pitch is positive when the head tilts up, like ``AvatarParams.pitch``. MediaPipe's
+    rotation about x is the other way round (positive = chin down), so it's negated here.
+    """
     angles, *_ = cv2.RQDecomp3x3(np.asarray(rot, dtype=np.float64)[:3, :3])
     pitch, yaw, roll = (float(a) for a in angles)
-    return pitch, yaw, roll
+    return -pitch, yaw, roll
 
 
 class FaceTracker:

@@ -77,13 +77,20 @@ def _check_vcam() -> tuple[str, str]:
     sink = VirtualCamSink(640, 360, 30)
     name = sink.cam.device
     sink.close()
+    if sys.platform.startswith("linux"):
+        from .linux_setup import status
+
+        if not status().persistent:
+            return WARN, (f"virtual camera: {name}, but it won't come back after a reboot\n"
+                          "       -> run: puppetcam setup")
     return OK, f"virtual camera: {name}"
 
 
 _HINTS = {
     "camera": "check that no other app is using the webcam, or try --camera 1",
     "microphone": "optional: puppetcam still works, away mode just won't lip-sync",
-    "virtual camera": "on macOS/Windows quit OBS (its own Virtual Camera must be stopped) and retry",
+    "virtual camera": ("on Linux run: puppetcam setup\n          on macOS/Windows quit OBS "
+                       "(its own Virtual Camera must be stopped) and retry"),
 }
 
 

@@ -53,6 +53,8 @@ def _add_run_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--stats", action="store_true", help="log fps and timings every 5 s")
     p.add_argument("--save", action="store_true",
                    help="save the options above as your defaults (see: puppetcam settings)")
+    p.add_argument("--notify-errors", action="store_true",
+                   help=argparse.SUPPRESS)  # started from the Linux app menu: errors in a dialog
 
 
 def settings_with_args(base: Settings, a: argparse.Namespace) -> Settings:
@@ -71,15 +73,43 @@ def _cmd_run(a: argparse.Namespace) -> None:
     from .app import RunConfig, run
     from .settings import load_settings, save_settings
 
-    s = settings_with_args(load_settings(), a)
-    if a.save:
-        print(f"saved to {save_settings(s)}")
-    run(RunConfig.from_settings(
-        s, cam_width=a.cam_size[0], cam_height=a.cam_size[1],
-        away_track_fps=a.away_track_fps, track_width=a.track_width,
-        vcam=not a.no_vcam, vcam_device=a.vcam_device, vcam_backend=a.vcam_backend,
-        preview=not a.no_preview, model=a.model, stats=a.stats,
-    ))
+    try:
+        s = settings_with_args(load_settings(), a)
+        if a.save:
+            print(f"saved to {save_settings(s)}")
+        run(RunConfig.from_settings(
+            s, cam_width=a.cam_size[0], cam_height=a.cam_size[1],
+            away_track_fps=a.away_track_fps, track_width=a.track_width,
+            vcam=not a.no_vcam, vcam_device=a.vcam_device, vcam_backend=a.vcam_backend,
+            preview=not a.no_preview, model=a.model, stats=a.stats,
+        ))
+    except (RuntimeError, ValueError) as exc:
+        if a.notify_errors:
+            from .linux_setup import show_error
+
+            show_error(str(exc))
+        raise
+
+
+def _cmd_setup(a: argparse.Namespace) -> None:
+    if not sys.platform.startswith("linux"):
+        print("Nothing to set up here: on macOS and Windows install OBS Studio for its virtual\n"
+              "camera (see the README), then run: puppetcam doctor")
+        return
+    from . import linux_setup
+
+    if a.dry_run:
+        print(linux_setup.root_script(linux_setup.status()), end="")
+        return
+    linux_setup.setup_vcam()
+    if not a.no_menu_entry:
+        try:
+            path = linux_setup.install_menu_entry()
+            print(f"Added Puppetcam to your applications menu ({path}).")
+        except Exception as exc:  # nice to have: never fail the setup for it
+            print(f"Could not add the menu entry: {exc}")
+    print("Done. Open Puppetcam from the applications menu, or run: puppetcam\n"
+          'Then pick the "puppetcam" camera in Meet, Zoom or Teams.')
 
 
 def _cmd_tray(a: argparse.Namespace) -> None:
@@ -214,6 +244,12 @@ def build_parser() -> argparse.ArgumentParser:
     av = sub.add_parser("avatars", help="list installed avatars")
     av.set_defaults(func=_cmd_avatars)
 
+    su = sub.add_parser("setup", help="Linux: set up the virtual camera (also after reboots) "
+                                      "and add Puppetcam to the applications menu")
+    su.add_argument("--no-menu-entry", action="store_true", help="don't add the menu entry")
+    su.add_argument("--dry-run", action="store_true", help="print the commands run as root, run nothing")
+    su.set_defaults(func=_cmd_setup)
+
     dr = sub.add_parser("doctor", help="check camera, model, microphone and virtual camera")
     dr.add_argument("--camera", type=int, help="webcam index (default: the saved one)")
     dr.add_argument("--no-vcam", action="store_true", help="skip the virtual camera check")
@@ -221,7 +257,8 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
-COMMANDS = {"run", "tray", "settings", "bench", "demo", "themes", "download-model", "avatars", "doctor"}
+COMMANDS = {"run", "tray", "setup", "settings", "bench", "demo", "themes", "download-model", "avatars",
+            "doctor"}
 VERBOSE = ("-v", "--verbose")
 
 

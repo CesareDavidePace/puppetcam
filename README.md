@@ -21,8 +21,8 @@ mouth. Zoom, Meet, Teams and anything else just see a normal webcam.
 
 > Status: alpha. Expect rough edges, and please open issues.
 >
-> This README describes **puppetcam 0.2.0**, including installers, the menu bar / tray app
-> and saved settings. If you're using 0.1.1, upgrade to use these features.
+> This README describes **puppetcam 0.2.1**, including installers, the menu bar / tray app,
+> saved settings and `puppetcam setup` on Linux. If you're using 0.1.1, upgrade to use these features.
 
 ## Quick start
 
@@ -32,7 +32,7 @@ mouth. Zoom, Meet, Teams and anything else just see a normal webcam.
 | --- | --- |
 | Windows | [OBS Studio](https://obsproject.com). It ships the "OBS Virtual Camera" driver. Run it once, then quit it. |
 | macOS | OBS Studio 30+. Start and stop its Virtual Camera once, allow it (see below), then quit OBS. |
-| Linux | Load `v4l2loopback`; install your distro's package only if the module is missing. See [Linux setup and test status](#linux-setup-and-test-status). |
+| Linux | Nothing yet: `puppetcam setup` does it after step 2 (see [Linux in three commands](#linux-in-three-commands)). |
 
 **2. Install puppetcam** (Python 3.11+; on Windows use 3.11 or 3.12, see [platform notes](#platform-notes)):
 
@@ -49,6 +49,22 @@ Mint community report below.
 **Prefer an app without a terminal?** Download the macOS (Apple Silicon) or Windows installer
 from the [releases page](https://github.com/cesaredavidepace/puppetcam/releases).
 Both include the face model. See [installing the app](#installing-the-app) for setup.
+
+#### Linux in three commands
+
+On Ubuntu, Linux Mint, Debian, Pop!_OS and other apt-based distros, paste these into a terminal:
+
+```bash
+sudo apt install pipx
+pipx install puppetcam
+~/.local/bin/puppetcam setup
+```
+
+`puppetcam setup` asks for your password once. It installs the virtual camera module if it's
+missing, makes it come back by itself after every reboot, and adds **Puppetcam** to your
+applications menu. From then on, open Puppetcam from the menu like any other app: the avatar
+window appears, and closing it turns the avatar camera off. On other distros `puppetcam setup`
+prints the one package to install first.
 
 Upgrading from an earlier version? Run `pip install --upgrade puppetcam`, or
 `pipx upgrade puppetcam` if you installed with pipx.
@@ -72,7 +88,8 @@ Windows tray (grey when the camera is off). From its menu:
 
 If something fails (no virtual camera, webcam busy) the first line of the menu says so;
 click it for help. Every change is saved, so a terminal `puppetcam` starts the same way.
-On Linux the tray needs `pip install "puppetcam[tray]"` and a desktop with a tray area.
+On Linux the tray needs a desktop with a tray area (Cinnamon, KDE, XFCE, MATE; GNOME only with
+the AppIndicator extension). In the applications menu, right-click Puppetcam → **Start in the tray**.
 
 ### Settings
 
@@ -108,8 +125,8 @@ Flags always win over the file for that run: with `badge = false` saved,
 
 ### Installing the app
 
-Download `Puppetcam-0.2.0-macos-arm64.dmg` (Apple Silicon) or
-`Puppetcam-0.2.0-windows-setup.exe` from the
+Download `Puppetcam-0.2.1-macos-arm64.dmg` (Apple Silicon) or
+`Puppetcam-0.2.1-windows-setup.exe` from the
 [releases page](https://github.com/cesaredavidepace/puppetcam/releases).
 
 - On macOS, drag Puppetcam to Applications and open it; it lives in the menu bar.
@@ -157,26 +174,32 @@ A [community report in #1](https://github.com/cesaredavidepace/puppetcam/issues/
 - `puppetcam doctor` passed all checks, including a real webcam and the virtual camera.
 - The tester reported working virtual-camera output in **webcamtests.com** through the browser's
   `getUserMedia()` API. Meet, Zoom and Teams were **not tested in this report**.
-- Up/down head movement was reported as reversed. Try `puppetcam --invert-pitch`
-  (already available in 0.1.1); confirmation from the tester is still pending.
-- Qt font warnings appeared in the preview logs, but the application started and ran.
+- Up/down head movement was reversed. This was a bug on every OS, **fixed in 0.2.1**: if you
+  saved `invert_pitch = true` as a workaround, remove it (`puppetcam --no-invert-pitch --save`).
+- Qt's dialogs (such as the one Ctrl+S opens on the preview) showed no text, because some OpenCV
+  wheels ship Qt without fonts. **Fixed in 0.2.1**: puppetcam uses the system fonts, and the
+  preview window no longer has Qt's toolbar.
+- The virtual camera disappeared after a reboot until `modprobe` was run again. **Fixed in 0.2.1**
+  with `puppetcam setup`.
 
-This is a report for one setup and version, not validation of every Linux distro or of 0.2.0.
+0.2.1 is also tested on Ubuntu 24.04 (the base of Mint 22) in a container: install with pipx,
+tests, the face tracker, the preview window and its dialogs under X11, and `puppetcam setup`.
+A container can't load kernel modules or use a webcam, so real-hardware reports still matter.
+This is not validation of every Linux distro.
 CI also covers install, tests and rendering on Ubuntu. Reports from other distros, Wayland
 sessions and meeting apps are welcome in [#1](https://github.com/cesaredavidepace/puppetcam/issues/1).
 Include `puppetcam doctor`, your distro, desktop, X11/Wayland, browser or meeting app and version,
 and any problems you noticed.
 
-**Set up the virtual camera:** your system may already provide `v4l2loopback`. The Mint tester
-used a preinstalled signed kernel module and did not need `v4l2loopback-dkms`. First try:
+**Set up the virtual camera:** run `puppetcam setup` (see [Linux in three commands](#linux-in-three-commands)).
+`puppetcam setup --dry-run` prints the commands it runs as root, without running them. In short:
+it installs `v4l2loopback-dkms` only if the module is missing (many systems, like the Mint tester's,
+already ship a signed one), writes `/etc/modules-load.d/puppetcam.conf` and
+`/etc/modprobe.d/puppetcam.conf`, and loads the module with
+`devices=1 exclusive_caps=1 card_label="puppetcam"`. To undo it, delete those two files.
 
-```bash
-sudo modprobe v4l2loopback devices=1 exclusive_caps=1 card_label="puppetcam"
-```
-
-If the module is missing, install the package for your distro and running kernel. On
-Debian/Ubuntu-based systems, one option is `sudo apt install v4l2loopback-dkms`; then retry
-the `modprobe` command above. Fedora, Arch and other distros have different packaging.
+- **Secure Boot:** if the kernel refuses a freshly built DKMS module, reboot and choose
+  **Enroll MOK** on the blue screen, with the password you set during the install.
 
 - **Start puppetcam before opening the meeting in the browser.** With `exclusive_caps=1`, Chrome
   only lists the virtual camera once frames are flowing into it.
@@ -193,7 +216,7 @@ Using the installed app? Attach the log instead (menu → **Open log**), or run 
 
 ## Useful options
 
-In 0.2.0, supported run settings can be saved with `--save` (see [settings](#settings)).
+Since 0.2.0, supported run settings can be saved with `--save` (see [settings](#settings)).
 
 ```bash
 puppetcam --size 1280x720          # output resolution (default 960x540)
@@ -242,6 +265,19 @@ Everything you can set (colors, head roundness and proportions, eye size and spa
 width, body width, accessories, background) is listed with comments in
 [`themes/sprout.toml`](src/puppetcam/themes/sprout.toml). Shades like `skin_shade` are derived
 automatically unless you set them. Themes cost nothing at runtime: they're applied once at startup.
+
+## Looking for a Snap Camera alternative?
+
+Snap Camera, the free app for camera filters in video calls, shut down in January 2023.
+puppetcam covers the most common use: showing up in a call as a character that moves like you,
+instead of your face or a black square.
+
+- **Free and open source**, with no account and no ads.
+- **Works in any app** that accepts a webcam: Zoom, Google Meet, Microsoft Teams, Discord,
+  Slack, Webex, OBS. Avatars built into a single meeting app only work there.
+- **Runs offline on an ordinary laptop CPU**, on macOS, Windows and Linux.
+
+It's not a face filter: you get a cartoon avatar, not effects on your real image.
 
 ## How it works
 

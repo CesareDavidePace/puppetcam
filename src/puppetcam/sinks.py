@@ -14,8 +14,7 @@ VCAM_HELP = """\
 No virtual camera backend found. Install one:
   Windows : OBS Studio (provides 'OBS Virtual Camera'), then run once and close it
   macOS   : OBS Studio 30+, start its Virtual Camera once so macOS registers it
-  Linux   : sudo apt install v4l2loopback-dkms
-            sudo modprobe v4l2loopback devices=1 exclusive_caps=1 card_label="Puppetcam"
+  Linux   : run  puppetcam setup  (asks for your password once, works after reboots too)
 """
 
 
@@ -64,8 +63,14 @@ class PreviewWindow:
     TITLE = "puppetcam  [q] quit  [c] recalibrate  [a] away  [b] badge"
 
     def __init__(self, scale: float = 0.75) -> None:
+        from .platform_tweaks import fix_qt_fonts
+
+        fix_qt_fonts()
         self.scale = scale
-        cv2.namedWindow(self.TITLE, cv2.WINDOW_AUTOSIZE)
+        self._was_visible = False
+        # GUI_NORMAL: no Qt toolbar and status bar on Linux (zoom/save buttons that don't
+        # belong in a preview). Other OSes ignore it.
+        cv2.namedWindow(self.TITLE, cv2.WINDOW_AUTOSIZE | cv2.WINDOW_GUI_NORMAL)
 
     def show(self, frame: np.ndarray, camera: np.ndarray | None, lines: list[str]) -> int:
         view = frame
@@ -82,7 +87,24 @@ class PreviewWindow:
             cv2.putText(view, line, (10, 22 + 20 * i), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
                         (255, 255, 255), 1, cv2.LINE_AA)
         cv2.imshow(self.TITLE, view)
-        return cv2.waitKey(1) & 0xFF
+        key = cv2.waitKey(1) & 0xFF
+        if self.closed():
+            return ord("q")  # the window's close button means quit, like 'q'
+        return key
+
+    def closed(self) -> bool:
+        """True once the window was shown and then closed. Backends that can't tell
+        (the property stays below 1 from the start) never count as closed."""
+        try:
+            visible = cv2.getWindowProperty(self.TITLE, cv2.WND_PROP_VISIBLE) >= 1
+        except cv2.error:
+            visible = False
+        if visible:
+            self._was_visible = True
+        return self._was_visible and not visible
 
     def close(self) -> None:
-        cv2.destroyWindow(self.TITLE)
+        try:
+            cv2.destroyWindow(self.TITLE)
+        except cv2.error:  # already closed with its close button
+            pass
